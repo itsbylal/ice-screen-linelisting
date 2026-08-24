@@ -3,7 +3,7 @@
 Interactive line list for the ICE TB active case-finding programme.
 Mercy Corps Pakistan.
 
-2,996+ records across 162 variables, sourced from the CommCare → Synapse export
+Records across 162 variables, sourced from the CommCare → Synapse export
 in Azure Blob Storage.
 
 ---
