@@ -1,8 +1,0 @@
-{
-  "name": "ice-linelist-api",
-  "version": "1.0.0",
-  "description": "Authenticated proxy for the ICE TB cumulative export",
-  "main": "data/index.js",
-  "engines": { "node": ">=18" },
-  "dependencies": {}
-}
