@@ -1,0 +1,35 @@
+# ==========================================================
+#  NEVER COMMIT — credentials
+# ==========================================================
+source_url.txt
+*.sas
+.env
+.env.*
+
+# ==========================================================
+#  NEVER COMMIT — patient-level data
+# ==========================================================
+snapshots/
+ice_cumulative_data*.json
+ice_data_*.json
+icecumulativedata*.csv
+*.json.gz
+
+# The local build embeds all records AND the SAS token.
+# (gitignore has no inline comments - keep patterns on their own lines.)
+ice_tb_line_list.html
+build/ice_tb_line_list.html
+
+# CSV exports taken from the dashboard
+ice_line_list_*.csv
+
+# ==========================================================
+#  Build noise
+# ==========================================================
+refresh_log.txt
+*.tmp
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+Thumbs.db
