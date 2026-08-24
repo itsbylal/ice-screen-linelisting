@@ -1,0 +1,74 @@
+#!/bin/sh
+#
+# Blocks a push that would send an Azure SAS token or patient records to the
+# remote. GitHub's own push protection does not cover private repositories on
+# personal accounts, so this is the local equivalent.
+#
+# Activate once, in the repo root:
+#     git config core.hooksPath hooks
+#
+# Verify with:  git config core.hooksPath   ->  hooks
+#
+# To push anyway (you should not need to):  git push --no-verify
+
+fail=0
+say() { printf '%s\n' "$1" >&2; }
+
+say ""
+say "pre-push: scanning for credentials and patient data…"
+
+# --- 1. Azure SAS tokens anywhere in tracked files -------------------------
+hits=$(git grep -lIE 'blob\.core\.windows\.net[^"'"'"' ]*sig=' -- \
+        ':!hooks/pre-push' ':!README.md' 2>/dev/null)
+if [ -n "$hits" ]; then
+  say ""
+  say "  BLOCKED — an Azure SAS token was found in:"
+  printf '    %s\n' $hits >&2
+  fail=1
+fi
+
+# --- 2. Embedded patient records ------------------------------------------
+hits=$(git grep -lI '"rows":\[\[' -- '*.html' 2>/dev/null)
+if [ -n "$hits" ]; then
+  say ""
+  say "  BLOCKED — embedded data rows found in:"
+  printf '    %s\n' $hits >&2
+  say "    The hosted build (www/index.html) must contain no records."
+  fail=1
+fi
+
+# --- 3. Files that must never be tracked at all ---------------------------
+for p in source_url.txt ice_tb_line_list.html; do
+  if git ls-files --error-unmatch "$p" >/dev/null 2>&1; then
+    say ""
+    say "  BLOCKED — $p is tracked by git and must not be."
+    say "    Fix:  git rm --cached $p"
+    fail=1
+  fi
+done
+if git ls-files | grep -q '^snapshots/'; then
+  say ""
+  say "  BLOCKED — files under snapshots/ are tracked."
+  say "    Fix:  git rm -r --cached snapshots"
+  fail=1
+fi
+
+# --- 4. Patient names in tracked content ----------------------------------
+if git grep -lIE '"PI_FullName":"[A-Za-z]' >/dev/null 2>&1; then
+  say ""
+  say "  BLOCKED — records containing PI_FullName are tracked."
+  fail=1
+fi
+
+if [ "$fail" -ne 0 ]; then
+  say ""
+  say "  Push aborted. Nothing was sent to the remote."
+  say "  If a token was already pushed in an earlier commit, rotate it in"
+  say "  Azure first — rewriting history does not reach existing clones."
+  say ""
+  exit 1
+fi
+
+say "  clean — no credentials or patient data found."
+say ""
+exit 0
